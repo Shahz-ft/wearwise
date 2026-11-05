@@ -11,72 +11,89 @@ import SavedOutfits from "./pages/SavedOutfits";
 import Settings from "./pages/Settings";
 import AppLayout from "./components/AppLayout";
 
+import { ToastContainer, Bounce } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 import "./App.css";
 
 function App() {
   return (
-    <Routes>
+    <>
+      <Routes>
         {/* Public Home Page with its own public navbar & footer */}
         <Route path="/" element={<Home />} />
 
         {/* Application Pages with Shared Sidebar and Topbar */}
-        <Route 
-          path="/dashboard" 
+        <Route
+          path="/dashboard"
           element={
             <AppLayout>
               <Dashboard />
             </AppLayout>
-          } 
+          }
         />
-        <Route 
-          path="/wardrobe" 
+        <Route
+          path="/wardrobe"
           element={
             <AppLayout>
               <MyWardrobe />
             </AppLayout>
-          } 
+          }
         />
-        <Route 
-          path="/add-item" 
+        <Route
+          path="/add-item"
           element={
             <AppLayout>
               <AddItem />
             </AppLayout>
-          } 
+          }
         />
-        <Route 
-          path="/smart-matcher" 
+        <Route
+          path="/smart-matcher"
           element={
             <AppLayout>
               <SmartMatcher />
             </AppLayout>
-          } 
+          }
         />
-        <Route 
-          path="/outfit-studio" 
+        <Route
+          path="/outfit-studio"
           element={
             <AppLayout>
               <OutfitStudio />
             </AppLayout>
-          } 
+          }
         />
-        <Route 
-          path="/saved-outfits" 
+        <Route
+          path="/saved-outfits"
           element={
             <AppLayout>
               <SavedOutfits />
             </AppLayout>
-          } 
+          }
         />
-        <Route 
-          path="/settings" 
+        <Route
+          path="/settings"
           element={
             <AppLayout>
               <Settings />
             </AppLayout>
-          } 
+          }
         />
       </Routes>
+
+      <ToastContainer
+        position="top-center"
+        autoClose={5000}
+        hideProgressBar={false}
+        closeOnClick={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+        transition={Bounce}
+      />
+    </>
   );
 }
 

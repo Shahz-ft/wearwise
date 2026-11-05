@@ -1,18 +1,31 @@
-import React from 'react';
-import { MoonIcon } from './Icons';
+import React, { useState } from "react";
+import { MoonIcon } from "./Icons";
 
-const ModeToggle = ({ variant = 'icon', className = '' }) => {
-  if (variant === 'sidebar') {
+const ModeToggle = ({ variant = "icon", className = "" }) => {
+  const [darkMode, setDarkMode] = useState(
+    document.documentElement.classList.contains("dark"),
+  );
+
+  const handleToggle = () => {
+    const newMode = !darkMode;
+
+    setDarkMode(newMode);
+    document.documentElement.classList.toggle("dark", newMode);
+  };
+
+  if (variant === "sidebar") {
     return (
       <button
         type="button"
         className={`sidebar-nav-item mode-toggle-sidebar ${className}`}
-        aria-label="Dark mode toggle placeholder"
+        onClick={handleToggle}
       >
         <span className="nav-icon">
           <MoonIcon size={20} />
         </span>
-        <span className="nav-label">Dark Mode</span>
+        <span className="nav-label">
+          {darkMode ? "Light Mode" : "Dark Mode"}
+        </span>
       </button>
     );
   }
@@ -21,7 +34,8 @@ const ModeToggle = ({ variant = 'icon', className = '' }) => {
     <button
       type="button"
       className={`theme-icon-btn ${className}`}
-      aria-label="Dark mode toggle placeholder"
+      onClick={handleToggle}
+      aria-label="Toggle dark mode"
     >
       <MoonIcon size={19} />
     </button>

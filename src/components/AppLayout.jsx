@@ -1,6 +1,6 @@
-import React from 'react';
-import Sidebar from './Sidebar';
-import Navbar from './Navbar';
+import React from "react";
+import Sidebar from "./Sidebar";
+import Navbar from "./Navbar";
 
 const AppLayout = ({ children }) => {
   return (
@@ -14,9 +14,7 @@ const AppLayout = ({ children }) => {
         <Navbar variant="app" />
 
         {/* Dynamic Page View */}
-        <main className="app-content-body">
-          {children}
-        </main>
+        <main className="app-content-body">{children}</main>
       </div>
     </div>
   );

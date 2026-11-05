@@ -1,44 +1,98 @@
-import React from 'react';
-import OutfitCard from '../components/OutfitCard';
-
-// Outfit collage images
-import casualDayImg from '../assets/outfit_casual_day.jpg';
-import collegeLookImg from '../assets/outfit_college_look.jpg';
-import officeWearImg from '../assets/outfit_office_wear.jpg';
-import partyLookImg from '../assets/outfit_party_look.jpg';
-import brunchLookImg from '../assets/outfit_brunch_look.jpg';
-import travelOutfitImg from '../assets/outfit_travel_outfit.jpg';
-
-const savedOutfitsList = [
-  { id: 1, title: 'Casual Day', category: 'Casual', image: casualDayImg, isFavorite: true },
-  { id: 2, title: 'College Look', category: 'College', image: collegeLookImg, isFavorite: false },
-  { id: 3, title: 'Office Wear', category: 'Office', image: officeWearImg, isFavorite: true },
-  { id: 4, title: 'Party Look', category: 'Party', image: partyLookImg, isFavorite: true },
-  { id: 5, title: 'Brunch Look', category: 'Casual', image: brunchLookImg, isFavorite: false },
-  { id: 6, title: 'Travel Outfit', category: 'Casual', image: travelOutfitImg, isFavorite: true },
-];
+import React, { useEffect, useState } from "react";
+import OutfitCard from "../components/OutfitCard";
+import { getOutfits, updateOutfit } from "../services/AllAPIs";
+import { toast } from "react-toastify";
 
 const SavedOutfits = () => {
-  const filterTabs = ['All', 'Casual', 'College', 'Office', 'Party', 'Favourite'];
+  const [savedOutfitsList, setSavedOutfitsList] = useState([]);
+  const [selectedFilter, setSelectedFilter] = useState("All");
+
+  const filterTabs = [
+    "All",
+    "Casual",
+    "College",
+    "Office",
+    "Party",
+    "Favourite",
+  ];
+
+   useEffect(() => {
+    getSavedOutfits();
+  }, []);
+
+  // Fetch savd outfits
+  const getSavedOutfits = async () => {
+    try {
+      let apiResponse = await getOutfits();
+
+      if (apiResponse.status === 200) {
+        setSavedOutfitsList(apiResponse.data);
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to load saved outfits.");
+    }
+  };
+
+ 
+  // Add / remove fav
+  const handleFavorite = async (outfit) => {
+    const updatedFavorite = !outfit.isFavorite;
+
+    try {
+      let apiResponse = await updateOutfit(outfit.id, {
+        isFavorite: updatedFavorite,});
+
+      if (apiResponse.status === 200) {
+        setSavedOutfitsList((prev) =>
+          prev.map((item) =>
+            item.id === outfit.id
+              ? { ...item, isFavorite: updatedFavorite }
+              : item,
+          ),
+        );
+
+        toast.success(
+          updatedFavorite ? "Added to favourites!" : "Removed from favourites!",
+        );
+      } else {
+        toast.error("Failed to update favourite.");
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to update favourite.");
+    }
+  };
+
+  // Filter outfits
+  const filteredOutfits = savedOutfitsList.filter((outfit) => {
+    if (selectedFilter === "All") {
+      return true;
+    }
+
+    if (selectedFilter === "Favourite") {
+      return outfit.isFavorite === true;
+    }
+
+    return outfit.category === selectedFilter;
+  });
 
   return (
     <div className="page-container saved-outfits-page">
-      {/* Header Row */}
       <div className="saved-header-row">
         <h1 className="page-title">Saved Outfits</h1>
-        <button type="button" className="btn btn-primary btn-save-current">
-          <span>+ Save Current Outfit</span>
-        </button>
       </div>
 
-      {/* Filter Tabs Bar (Visual controls) */}
       <div className="saved-filter-bar">
         <div className="category-pill-group">
-          {filterTabs.map((tab, idx) => (
+          {filterTabs.map((tab) => (
             <button
               key={tab}
               type="button"
-              className={`category-pill-btn ${idx === 0 ? 'active' : ''}`}
+              className={`category-pill-btn ${
+                selectedFilter === tab ? "active" : ""
+              }`}
+              onClick={() => setSelectedFilter(tab)}
             >
               {tab}
             </button>
@@ -46,18 +100,27 @@ const SavedOutfits = () => {
         </div>
       </div>
 
-      {/* Outfits Grid */}
       <div className="saved-outfits-grid">
-        {savedOutfitsList.map((outfit) => (
-          <OutfitCard
-            key={outfit.id}
-            title={outfit.title}
-            image={outfit.image}
-            isFavorite={outfit.isFavorite}
-            showHeart={true}
-            showMenu={false}
-          />
-        ))}
+        {filteredOutfits.length > 0 ? (
+          filteredOutfits.map((outfit) => (
+            <OutfitCard
+              key={outfit.id}
+              title={outfit.title}
+              image={outfit.image}
+              items={outfit.items || []}
+              category={outfit.category}
+              isFavorite={outfit.isFavorite}
+              showHeart={true}
+              showMenu={false}
+              onFavorite={() => handleFavorite(outfit)}
+            />
+          ))
+        ) : (
+          <p>
+            No outfits found. Save an outfit from Smart Matcher or Outfit Studio
+            to see it here!
+          </p>
+        )}
       </div>
     </div>
   );

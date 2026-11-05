@@ -1,35 +1,125 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import ItemCard from '../components/ItemCard';
-import { SearchIcon, ChevronDown } from '../components/Icons';
-
-// Images
-import whiteTopImg from '../assets/item_white_shirt.jpg';
-import greenSweaterImg from '../assets/item_green_sweater.jpg';
-import blueJeansImg from '../assets/item_blue_jeans.jpg';
-import beigeTrousersImg from '../assets/item_beige_trousers.jpg';
-import blackDressImg from '../assets/item_black_dress.jpg';
-import whiteSneakersImg from '../assets/item_white_sneakers.jpg';
-import sunglassesImg from '../assets/item_sunglasses.jpg';
-import beigeBagImg from '../assets/item_beige_bag.jpg';
-import blackTeeImg from '../assets/item_black_tee.jpg';
-import stripedShirtImg from '../assets/item_striped_shirt.jpg';
-
-const wardrobeItems = [
-  { id: 1, title: 'White Top', category: 'Tops', tag: 'Top', image: whiteTopImg, color: 'white', season: 'all-season', style: 'minimalist' },
-  { id: 2, title: 'Green Sweater', category: 'Tops', tag: 'Top', image: greenSweaterImg, color: 'green', season: 'autumn', style: 'casual' },
-  { id: 3, title: 'Blue Jeans', category: 'Bottoms', tag: 'Bottom', image: blueJeansImg, color: 'blue', season: 'all-season', style: 'casual' },
-  { id: 4, title: 'Beige Trousers', category: 'Bottoms', tag: 'Bottom', image: beigeTrousersImg, color: 'beige', season: 'spring', style: 'formal' },
-  { id: 5, title: 'Black Dress', category: 'Dresses', tag: 'Dress', image: blackDressImg, color: 'black', season: 'all-season', style: 'party' },
-  { id: 6, title: 'White Sneakers', category: 'Shoes', tag: 'Shoes', image: whiteSneakersImg, color: 'white', season: 'all-season', style: 'casual' },
-  { id: 7, title: 'Sunglasses', category: 'Accessories', tag: 'Accessory', image: sunglassesImg, color: 'black', season: 'summer', style: 'chic' },
-  { id: 8, title: 'Beige Bag', category: 'Accessories', tag: 'Accessory', image: beigeBagImg, color: 'beige', season: 'all-season', style: 'chic' },
-  { id: 9, title: 'Black Tee', category: 'Tops', tag: 'Top', image: blackTeeImg, color: 'black', season: 'summer', style: 'casual' },
-  { id: 10, title: 'Striped Top', category: 'Tops', tag: 'Top', image: stripedShirtImg, color: 'white', season: 'spring', style: 'casual' },
-];
+import React, { useEffect, useState } from "react";
+import { getItems, deleteItem, updateItem } from "../services/AllAPIs";
+import { Link } from "react-router-dom";
+import ItemCard from "../components/ItemCard";
+import { SearchIcon, ChevronDown } from "../components/Icons";
+import { toast } from "react-toastify";
 
 const MyWardrobe = () => {
-  const categories = ['All', 'Tops', 'Bottoms', 'Dresses', 'Shoes', 'Accessories'];
+  const categories = [
+    "All",
+    "Tops",
+    "Bottoms",
+    "Dresses",
+    "Shoes",
+    "Accessories",
+  ];
+  const [wardrobeItems, setWardrobeItems] = useState([]);
+
+  const [open, setOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
+
+  const [searchVal, setSearchVal] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedColor, setSelectedColor] = useState("all");
+  const [selectedSeason, setSelectedSeason] = useState("all");
+  const [selectedStyle, setSelectedStyle] = useState("all");
+
+  useEffect(() => {
+    getWardrobeItems();
+  }, []);
+
+  const getWardrobeItems = async () => {
+    try {
+      let apiResponse = await getItems();
+      console.log(apiResponse);
+
+      if (apiResponse.status === 200) {
+        setWardrobeItems(apiResponse.data);
+      } else {
+        toast.error("Failed to get wardrobe items");
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to get wardrobe items");
+    }
+  };
+
+  const onDeleteClick = async (id) => {
+    try {
+      let apiResponse = await deleteItem(id);
+
+      if (apiResponse.status === 200) {
+        toast.success("Item deleted successfully");
+        getWardrobeItems();
+      } else {
+        toast.error("Failed to delete item");
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to delete item");
+    }
+  };
+
+  const onEditClick = (id) => {
+    let item = wardrobeItems.find((eachItem) => eachItem.id === id);
+
+    if (item) {
+      setSelectedItem({ ...item });
+      handleOpen();
+    }
+  };
+
+  const onUpdateClick = async (e) => {
+    e.preventDefault();
+
+    try {
+      let apiResponse = await updateItem(selectedItem.id, selectedItem);
+
+      if (apiResponse.status === 200) {
+        toast.success("Item updated successfully");
+        handleClose();
+        getWardrobeItems();
+      } else {
+        toast.error("Failed to update item");
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to update item");
+    }
+  };
+
+  const filteredItems = wardrobeItems.filter((item) => {
+    let matchesSearch = (item.name || "")
+      .toLowerCase()
+      .includes(searchVal.toLowerCase());
+
+    let matchesCategory =
+      selectedCategory === "All" ||
+      (item.category || "").toLowerCase() === selectedCategory.toLowerCase();
+
+    let matchesColor =
+      selectedColor === "all" ||
+      (item.color || "").toLowerCase() === selectedColor;
+
+    let matchesSeason =
+      selectedSeason === "all" ||
+      (item.season || "").toLowerCase() === selectedSeason;
+
+    let matchesStyle =
+      selectedStyle === "all" ||
+      (item.style || "").toLowerCase() === selectedStyle;
+
+    return (
+      matchesSearch &&
+      matchesCategory &&
+      matchesColor &&
+      matchesSeason &&
+      matchesStyle
+    );
+  });
 
   return (
     <div className="page-container wardrobe-page">
@@ -45,11 +135,14 @@ const MyWardrobe = () => {
       <div className="wardrobe-filter-panel">
         {/* Category Tabs */}
         <div className="category-pill-group">
-          {categories.map((cat, idx) => (
+          {categories.map((cat) => (
             <button
               key={cat}
               type="button"
-              className={`category-pill-btn ${idx === 0 ? 'active' : ''}`}
+              className={`category-pill-btn ${
+                selectedCategory === cat ? "active" : ""
+              }`}
+              onClick={() => setSelectedCategory(cat)}
             >
               {cat}
             </button>
@@ -66,31 +159,46 @@ const MyWardrobe = () => {
               type="text"
               placeholder="Search items..."
               className="filter-search-input"
+              value={searchVal}
+              onChange={(e) => setSearchVal(e.target.value)}
             />
           </div>
 
           <div className="filter-dropdown-group">
             {/* Color Filter */}
             <div className="select-container compact-select">
-              <select 
-                defaultValue="all"
+              <select
+                value={selectedColor}
+                onChange={(e) => setSelectedColor(e.target.value)}
                 className="filter-select"
                 aria-label="Filter by color"
               >
                 <option value="all">Color</option>
-                <option value="white">White</option>
-                <option value="green">Green</option>
-                <option value="blue">Blue</option>
-                <option value="beige">Beige</option>
                 <option value="black">Black</option>
+                <option value="white">White / Cream</option>
+                <option value="red">Red</option>
+                <option value="pink">Pink</option>
+                <option value="blue">Blue</option>
+                <option value="green">Green</option>
+                <option value="yellow">Yellow</option>
+                <option value="orange">Orange</option>
+                <option value="purple">Purple</option>
+                <option value="brown">Brown</option>
+                <option value="beige">Beige</option>
+                <option value="grey">Grey</option>
+                <option value="multicolor">Multicolor</option>
+                <option value="other">Other</option>
               </select>
-              <span className="select-arrow"><ChevronDown size={12} /></span>
+              <span className="select-arrow">
+                <ChevronDown size={12} />
+              </span>
             </div>
 
             {/* Season Filter */}
             <div className="select-container compact-select">
-              <select 
-                defaultValue="all"
+              <select
+                value={selectedSeason}
+                onChange={(e) => setSelectedSeason(e.target.value)}
                 className="filter-select"
                 aria-label="Filter by season"
               >
@@ -101,13 +209,16 @@ const MyWardrobe = () => {
                 <option value="winter">Winter</option>
                 <option value="all-season">All Season</option>
               </select>
-              <span className="select-arrow"><ChevronDown size={12} /></span>
+              <span className="select-arrow">
+                <ChevronDown size={12} />
+              </span>
             </div>
 
             {/* Style Filter */}
             <div className="select-container compact-select">
-              <select 
-                defaultValue="all"
+              <select
+                value={selectedStyle}
+                onChange={(e) => setSelectedStyle(e.target.value)}
                 className="filter-select"
                 aria-label="Filter by style"
               >
@@ -117,8 +228,11 @@ const MyWardrobe = () => {
                 <option value="chic">Chic</option>
                 <option value="party">Party</option>
                 <option value="minimalist">Minimalist</option>
+                <option value="street wear">Street Wear</option>
               </select>
-              <span className="select-arrow"><ChevronDown size={12} /></span>
+              <span className="select-arrow">
+                <ChevronDown size={12} />
+              </span>
             </div>
           </div>
         </div>
@@ -126,15 +240,209 @@ const MyWardrobe = () => {
 
       {/* Wardrobe Items Grid */}
       <div className="wardrobe-items-grid">
-        {wardrobeItems.map((item) => (
+        {filteredItems.map((item) => (
           <ItemCard
             key={item.id}
-            title={item.title}
-            category={item.tag}
+            title={item.name}
+            category={item.category}
             image={item.image}
+            id={item.id}
+            onDelete={onDeleteClick}
+            onEdit={onEditClick}
           />
         ))}
       </div>
+      {/* modal */}
+
+      {open && selectedItem && (
+        <div className="edit-modal-overlay" onClick={handleClose}>
+          <div className="edit-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="edit-modal-header">
+              <h2>Edit Item Details</h2>
+
+              <button
+                type="button"
+                className="edit-modal-close"
+                onClick={handleClose}
+                aria-label="Close modal"
+              >
+                &times;
+              </button>
+            </div>
+
+            <form onSubmit={onUpdateClick}>
+              <div className="edit-modal-body">
+                <div className="edit-image-preview">
+                  <p>Item Image</p>
+
+                  {selectedItem.image ? (
+                    <img src={selectedItem.image} alt={selectedItem.name} />
+                  ) : (
+                    <div className="edit-image-placeholder">
+                      No image uploaded
+                    </div>
+                  )}
+
+                  <label className="edit-image-upload">
+                    Change Image
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+
+                        if (!file) return;
+
+                        if (!file.type.startsWith("image/")) {
+                          toast.error("Please select an image file");
+                          e.target.value = "";
+                          return;
+                        }
+
+                        if (file.size > 500 * 1024) {
+                          toast.error("Image must be smaller than 500 KB");
+                          e.target.value = "";
+                          return;
+                        }
+
+                        const reader = new FileReader();
+
+                        reader.onload = () => {
+                          setSelectedItem({
+                            ...selectedItem,
+                            image: reader.result,
+                          });
+                        };
+
+                        reader.readAsDataURL(file);
+                      }}
+                    />
+                  </label>
+                </div>
+
+                <label>
+                  Item Name *
+                  <input
+                    type="text"
+                    value={selectedItem.name || ""}
+                    required
+                    onChange={(e) =>
+                      setSelectedItem({
+                        ...selectedItem,
+                        name: e.target.value,
+                      })
+                    }
+                  />
+                </label>
+
+                <label>
+                  Category *
+                  <select
+                    value={selectedItem.category || ""}
+                    required
+                    onChange={(e) =>
+                      setSelectedItem({
+                        ...selectedItem,
+                        category: e.target.value,
+                      })
+                    }
+                  >
+                    <option value="">Select category</option>
+                    <option value="Tops">Tops</option>
+                    <option value="Bottoms">Bottoms</option>
+                    <option value="Dresses">Dresses</option>
+                    <option value="Shoes">Shoes</option>
+                    <option value="Accessories">Accessories</option>
+                  </select>
+                </label>
+
+                <label>
+                  Color
+                  <select
+                    value={selectedItem.color || ""}
+                    onChange={(e) =>
+                      setSelectedItem({
+                        ...selectedItem,
+                        color: e.target.value,
+                      })
+                    }
+                  >
+                    <option value="">Select color</option>
+                    <option value="black">Black</option>
+                    <option value="white">White / Cream</option>
+                    <option value="red">Red</option>
+                    <option value="pink">Pink</option>
+                    <option value="blue">Blue</option>
+                    <option value="green">Green</option>
+                    <option value="yellow">Yellow</option>
+                    <option value="orange">Orange</option>
+                    <option value="purple">Purple</option>
+                    <option value="brown">Brown</option>
+                    <option value="beige">Beige</option>
+                    <option value="grey">Grey</option>
+                    <option value="multicolor">Multicolor</option>
+                    <option value="other">Other</option>
+                  </select>
+                </label>
+
+                <label>
+                  Style
+                  <select
+                    value={selectedItem.style || ""}
+                    onChange={(e) =>
+                      setSelectedItem({
+                        ...selectedItem,
+                        style: e.target.value,
+                      })
+                    }
+                  >
+                    <option value="">Select style</option>
+                    <option value="casual">Casual</option>
+                    <option value="formal">Formal</option>
+                    <option value="chic">Chic</option>
+                    <option value="party">Party</option>
+                    <option value="minimalist">Minimalist</option>
+                  </select>
+                </label>
+
+                <label>
+                  Season
+                  <select
+                    value={selectedItem.season || ""}
+                    onChange={(e) =>
+                      setSelectedItem({
+                        ...selectedItem,
+                        season: e.target.value,
+                      })
+                    }
+                  >
+                    <option value="">Select season</option>
+                    <option value="spring">Spring</option>
+                    <option value="summer">Summer</option>
+                    <option value="autumn">Autumn</option>
+                    <option value="winter">Winter</option>
+                    <option value="all-season">All Season</option>
+                  </select>
+                </label>
+              </div>
+
+              <div className="edit-modal-footer">
+                <button
+                  type="button"
+                  className="edit-cancel-btn"
+                  onClick={handleClose}
+                >
+                  Cancel
+                </button>
+
+                <button type="submit" className="edit-save-btn">
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
